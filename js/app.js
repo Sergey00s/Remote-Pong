@@ -82,6 +82,10 @@ class UserRequest {
 		var fixed_data = {type: this.type, data: {user_token: this.token, command: command, args: args}};
 		this.socket.send(JSON.stringify(fixed_data));
 	}
+
+	set_token(token) {
+		this.token = token;
+	}
 }
 
 // end of Request.js
@@ -179,7 +183,11 @@ function join_room()
     console.log("Joining room: " + room + " with password: " + password);
 }
 
-
+function update_token()
+{
+    var token = document.getElementById("token").value;
+    req.set_token(token);
+}
 
 
 // end of main.js

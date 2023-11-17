@@ -91,6 +91,10 @@ function join_room()
     console.log("Joining room: " + room + " with password: " + password);
 }
 
-
+function update_token()
+{
+    var token = document.getElementById("token").value;
+    req.set_token(token);
+}
 
 

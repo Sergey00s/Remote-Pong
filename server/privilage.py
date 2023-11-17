@@ -21,9 +21,6 @@ class Client:
     def __repr__(self) -> str:
         return f'Client(id={self.id}, room={self.room})'
 
-
-
-
 class Room:
     def __init__(self, name, password):
         self.name = name
@@ -41,10 +38,8 @@ class Room:
         else:
             raise Exception('Room is full')
         
-
     def update_ball(self, posX, posY):
         self.ball = {'posX': posX, 'posY': posY}
-
 
     def __repr__(self) -> str:
         return f'Room(name={self.name})'
