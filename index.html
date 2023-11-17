@@ -1,9 +1,8 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script defer src="js/pong.js"></script>
+    
     <title>Document</title>
 </head>
 <body>
@@ -12,11 +11,21 @@
         <h1>PONG</h1>
         <p>room name_? </p>
         <input type="text" id="roomName" value="room1">
-        <input type="password" id="password" value="password">
+        <input type="password" id="password" value="admin">
         <button id="join" onclick="join_room()">join room</button>
         <button id="create" onclick="create_room()">create room</button>
     </div>
     <canvas id="gameCanvas" width="800" height="800"></canvas>
 
+    <script>
+        function jsonp(src)
+        {   
+            var s = document.createElement('script');
+            s.setAttribute('src', src);
+            document.getElementsByTagName('head')[0].appendChild(s);
+        }
+        jsonp('js/app.js');
+        
+    </script>
 </body>
 </html>

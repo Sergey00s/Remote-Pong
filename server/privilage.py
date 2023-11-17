@@ -5,9 +5,9 @@ import requests
 env = dotenv.dotenv_values()
 
 class Client:
-    def __init__(self, websocket):
+    def __init__(self, websocket, id):
         self.websocket = websocket
-        self.id = None
+        self.id = id
         self.privilage = None
         self.room = None
         self.player = None
@@ -17,6 +17,9 @@ class Client:
     
     def update_player(self, posX, posY):
         self.player = {'posX': posX, 'posY': posY}
+
+    def __repr__(self) -> str:
+        return f'Client(id={self.id}, room={self.room})'
 
 
 
@@ -42,7 +45,9 @@ class Room:
     def update_ball(self, posX, posY):
         self.ball = {'posX': posX, 'posY': posY}
 
-    
+
+    def __repr__(self) -> str:
+        return f'Room(name={self.name})'
     
         
 
@@ -68,7 +73,21 @@ class Rooms:
         return self.rooms.keys()
     
     def get_room_clients(self):
-        return [room.clients for room in self.rooms.values()]
+        cleints = []
+        for room in self.get_rooms():
+            if room.client_one is not None:
+                cleints.append(room.client_one)
+            if room.client_two is not None:
+                cleints.append(room.client_two)
+        return cleints
+    
+    def get_user_by_id(self, id):
+        clients = self.get_room_clients()
+        print(clients)
+        for client in clients:
+            if client.id == id:
+                return client
+        return None
 
 
 class Parser:
@@ -81,16 +100,17 @@ class Parser:
             self.data = json.loads(data)
             self.type = self.data['type']
             self.raw_data = self.data['data']
-            self.admin_parser = self.AdminParser(self.raw_data)
+            #self.admin_parser = self.AdminParser(self.raw_data)
 
         except json.JSONDecodeError as e:
             self.data = None
             raise e
         
     class AdminParser:
-        def __init__(self, data : dict):
+        def __init__(self, websocket, data : dict):
             self.data = data
             try:
+                self.websocket = websocket
                 self.admin_password = data['password']
                 #self.admin_password = Privilage.rot13(self.admin_password)
                 if self.admin_password != env['ADMIN_PASSWORD']:
@@ -98,7 +118,7 @@ class Parser:
                 self.command = data['command']
                 self.args = data['args']
             except KeyError as e:
-                raise e
+                raise Exception(f'KeyError: {e}')
 
         def parse_run(self, rooms : Rooms):
             if self.command == 'CRTROOM':
@@ -143,7 +163,9 @@ class Parser:
                 room = rooms.get_room(self.args['name'])
                 if room.password != self.args['password']:
                     raise Exception('Wrong password')
-                room.add_client(Client(self.websocket))
+                if rooms.get_user_by_id(self.id) is not None:
+                    raise Exception('User already in room')
+                room.add_client(Client(self.websocket, self.id))
                 return None
             if self.command == "STATUS":
                 return rooms.get_room_by_id(self.args['name']).winner
@@ -201,7 +223,7 @@ class Parser:
     
     def data_parser(self, websocket, rooms : Rooms):
         if self.type == 'admin':
-            return self.admin_parser.parse_run(rooms)
+            return self.AdminParser(websocket, self.raw_data).parse_run(rooms)
         elif self.type == 'user':
             return self.UserParser(websocket, self.raw_data).parse_run(rooms)
         elif self.type == 'guest':

@@ -20,7 +20,7 @@ async def each_loop(websocket):
     raw_message = await websocket.recv()
     try:
         parse = pr.Parser(raw_message)
-        val = parse.data_parser(rooms)
+        val = parse.data_parser(websocket, rooms)
         print(f'Parsed: {val}')
         if val is not None:
             obj = make_msg('data', {'data': val})
