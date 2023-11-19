@@ -16,5 +16,10 @@ class UserRequest {
 	set_token(token) {
 		this.token = token;
 	}
+
+	pure_request(buffer) {
+		this.socket.send(buffer);
+	}
 }
 
+export default UserRequest;

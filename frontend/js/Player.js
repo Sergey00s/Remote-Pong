@@ -47,11 +47,35 @@ class Paddle
 
 class Player extends Paddle
 {
-    constructor(color, pos)
+    constructor(color, pos, mass)
     {
         super(color, pos);
         this.name = "Player";
+        this.mass = mass;
+        this.velocity = {x: 0, y: 0};
+        this.momentum = this.calculateMomentum();
+        this.input = 0;
     }
+
+    resolve_input()
+    {
+        ;
+    }
+
+    calculateMomentum()
+    {
+        self.momentum = self.mass * self.velocity;
+        return self.momentum;
+    }
+
+    tick()
+    {
+        this.pos.x += this.velocity.x;
+        this.pos.y += this.velocity.y;
+        this.center = this.pos;
+        this.momentum = this.calculateMomentum();
+    }
+
 }
 
 class RemotePlayer extends Paddle
@@ -64,4 +88,4 @@ class RemotePlayer extends Paddle
 }
 
 
-///export {Player, RemotePlayer};
+export {Player, RemotePlayer};

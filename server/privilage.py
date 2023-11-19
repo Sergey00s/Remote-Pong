@@ -1,6 +1,9 @@
 import json
 import dotenv
 import requests
+import threading as th
+import time
+import ball as bl
 
 env = dotenv.dotenv_values()
 
@@ -27,8 +30,10 @@ class Room:
         self.password = password
         self.client_one = None 
         self.client_two = None
-        self.ball = None
-        self.winner = None
+        self.ball = bl.Ball(0, 0)
+        self.winner = 0
+        self.running = False
+
     
     def add_client(self, client : Client):
         if self.client_one is None:
@@ -38,6 +43,74 @@ class Room:
         else:
             raise Exception('Room is full')
         
+        if self.client_one is not None and self.client_two is not None:
+            if not self.running:
+                self.running = True
+                gameloop = th.Thread(target=self.game_loop)
+
+    def _init(self):
+        self.ball = bl.Ball(500, 500)
+        self.client_one.player = bl.Player(10, 500)
+        self.client_two.player = bl.Player(990, 500)
+        self.winner = 0
+
+
+    def _collisions(self):
+        if self.ball.is_colliding(self.client_one.player):
+            f = self.client_one.player.velocity * self.client_one.player.mass
+            self.ball.apply_force(f)
+        if self.ball.is_colliding(self.client_two.player):
+            f = self.client_two.player.velocity * self.client_two.player.mass
+            self.ball.apply_force(f)
+        if self.ball.is_out_of_bounds():
+            if self.ball.x < 0:
+                self.winner = 2
+            elif self.ball.x > 1000:
+                self.winner = 1
+            else:
+                self.winner = 0
+            self._init()
+
+    def _send_info(self):
+        if self.client_one is not None:
+            if self.client_two is not None:
+                x = self.client_two.player.x
+                y = self.client_two.player.y
+                rdata = {'type': 'data', 'data': {'command': 'player', 'data': {'posX': x, 'posY': y}}}
+                self.client_one.send(json.dumps(rdata))
+                x = self.client_two.ball.x
+                y = self.client_two.ball.y
+                rdata = {'type': 'data', 'data': {'command': 'ball', 'data': {'posX': x, 'posY': y}}}
+                self.client_one.send(json.dumps(rdata))
+        if self.client_two is not None:
+            if self.client_one is not None:
+                x = self.client_one.player.x
+                y = self.client_one.player.y
+                rdata = {'type': 'data', 'data': {'command': 'player', 'data': {'posX': x, 'posY': y}}}
+                self.client_two.send(json.dumps(rdata))
+                x = self.client_one.ball.x
+                y = self.client_one.ball.y
+                rdata = {'type': 'data', 'data': {'command': 'ball', 'data': {'posX': x, 'posY': y}}}
+                self.client_two.send(json.dumps(rdata))
+
+    def game_loop(self):
+        self._init()
+        thickrate = 17
+        while True:
+            if self.client_one is None or self.client_two is None:
+                break
+            if self.winner != 0:
+                break
+            
+            self._collisions()
+            self.ball.update(1/thickrate)
+            self._send_info()
+            time.sleep(1/thickrate)
+
+            
+
+
+
     def update_ball(self, posX, posY):
         self.ball = {'posX': posX, 'posY': posY}
 
