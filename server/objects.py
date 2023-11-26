@@ -17,6 +17,9 @@ class Velocity:
 	def __mul__(self, other):
 		return Velocity(self.x * other, self.y * other)
 	
+	def __rmul__(self, other):
+		return Velocity(self.x * other, self.y * other)
+	
 	def __truediv__(self, other):
 
 		return Velocity(self.x / other, self.y / other)
@@ -48,6 +51,8 @@ class Ball:
 		return f'Ball: {self.x}, {self.y}'
 	
 	def is_colliding(self, player):
+		if player is None:
+			return False
 		if self.x > player.topx and self.x < player.botx and self.y > player.topy and self.y < player.boty:
 			return True
 		return False

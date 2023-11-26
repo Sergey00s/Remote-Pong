@@ -1,4 +1,25 @@
+class Ball
+{
+    constructor(color, pos)
+    {
+        this.color = color;
+        this.pos = pos;
+    }
 
+    draw(ctx)
+    {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+
+    updatePos(newPos)
+    {
+        this.pos = newPos;
+    }
+
+}
 
 class Paddle
 {
@@ -43,6 +64,18 @@ class Paddle
         }
         return false;
     }
+
+    isCollide_border()
+    {
+        var topLeft = {x: this.pos.x - this.width/2, y: this.pos.y - this.height/2};
+        var bottomRight = {x: this.pos.x + this.width/2, y: this.pos.y + this.height/2};
+        if (topLeft.y <= 0 || bottomRight.y >= 800)
+        {
+            return true;
+        }
+        return false;
+    
+    }
 }
 
 class Player extends Paddle
@@ -70,10 +103,30 @@ class Player extends Paddle
 
     tick()
     {
+        if (this.isCollide_border())
+        {
+            this.velocity.y *= -1;
+        }
         this.pos.x += this.velocity.x;
         this.pos.y += this.velocity.y;
         this.center = this.pos;
         this.momentum = this.calculateMomentum();
+        this.friction();
+    }
+
+    moveUp()
+    {
+        this.velocity.y -= 1;
+    }
+    moveDown()
+    {
+        this.velocity.y += 1;
+    }
+
+    friction()
+    {
+        this.velocity.x *= 0.9;
+        this.velocity.y *= 0.9;
     }
 
 }
@@ -88,4 +141,4 @@ class RemotePlayer extends Paddle
 }
 
 
-export {Player, RemotePlayer};
+export {Player, RemotePlayer, Ball};

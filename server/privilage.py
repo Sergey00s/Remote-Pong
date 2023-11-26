@@ -3,20 +3,21 @@ import dotenv
 import requests
 import threading as th
 import time
-import ball as bl
+import objects as bl
+import asyncio
 
 env = dotenv.dotenv_values()
 
 class Client:
-    def __init__(self, websocket, id):
+    def __init__(self, websocket, id, player = bl.Player(0, 0)):
         self.websocket = websocket
         self.id = id
         self.privilage = None
         self.room = None
-        self.player = None
+        self.player = player
 
-    def send(self, data):
-        self.websocket.send(data)
+    async def send(self, data):
+        await self.websocket.send(data)
     
     def update_player(self, posX, posY):
         self.player = {'posX': posX, 'posY': posY}
@@ -33,6 +34,7 @@ class Room:
         self.ball = bl.Ball(0, 0)
         self.winner = 0
         self.running = False
+        print(f'Created room {self.name}')
 
     
     def add_client(self, client : Client):
@@ -46,16 +48,19 @@ class Room:
         if self.client_one is not None and self.client_two is not None:
             if not self.running:
                 self.running = True
-                gameloop = th.Thread(target=self.game_loop)
+                gameloop = asyncio.create_task(self.game_loop())
+                print('Game loop started')
 
-    def _init(self):
+    async def _init(self):
         self.ball = bl.Ball(500, 500)
         self.client_one.player = bl.Player(10, 500)
         self.client_two.player = bl.Player(990, 500)
         self.winner = 0
+        await self.client_one.send(json.dumps({'type': 'game', 'data': {'command': 'start', 'args': {}}}))
+        await self.client_two.send(json.dumps({'type': 'game', 'data': {'command': 'start', 'args': {}}}))
 
 
-    def _collisions(self):
+    async def _collisions(self):
         if self.ball.is_colliding(self.client_one.player):
             f = self.client_one.player.velocity * self.client_one.player.mass
             self.ball.apply_force(f)
@@ -69,42 +74,43 @@ class Room:
                 self.winner = 1
             else:
                 self.winner = 0
-            self._init()
+            await self._init()
 
-    def _send_info(self):
+    async def _send_info(self):
         if self.client_one is not None:
             if self.client_two is not None:
                 x = self.client_two.player.x
                 y = self.client_two.player.y
-                rdata = {'type': 'data', 'data': {'command': 'player', 'data': {'posX': x, 'posY': y}}}
-                self.client_one.send(json.dumps(rdata))
-                x = self.client_two.ball.x
-                y = self.client_two.ball.y
-                rdata = {'type': 'data', 'data': {'command': 'ball', 'data': {'posX': x, 'posY': y}}}
-                self.client_one.send(json.dumps(rdata))
+                rdata = {'type': 'game', 'data': {'command': 'player', 'args': {'posX': x, 'posY': y}}}
+                await self.client_one.send(json.dumps(rdata))
+                x = self.ball.x
+                y = self.ball.y
+                rdata = {'type': 'game', 'data': {'command': 'ball', 'args': {'posX': x, 'posY': y}}}
+                await self.client_one.send(json.dumps(rdata))
         if self.client_two is not None:
             if self.client_one is not None:
                 x = self.client_one.player.x
                 y = self.client_one.player.y
-                rdata = {'type': 'data', 'data': {'command': 'player', 'data': {'posX': x, 'posY': y}}}
-                self.client_two.send(json.dumps(rdata))
-                x = self.client_one.ball.x
-                y = self.client_one.ball.y
-                rdata = {'type': 'data', 'data': {'command': 'ball', 'data': {'posX': x, 'posY': y}}}
-                self.client_two.send(json.dumps(rdata))
+                rdata = {'type': 'game', 'data': {'command': 'player', 'args': {'posX': x, 'posY': y}}}
+                await self.client_two.send(json.dumps(rdata))
+                x = self.ball.x
+                y = self.ball.y
+                rdata = {'type': 'game', 'data': {'command': 'ball', 'args': {'posX': x, 'posY': y}}}
+                await self.client_two.send(json.dumps(rdata))
 
-    def game_loop(self):
-        self._init()
+    async def game_loop(self):
+        await self._init()
         thickrate = 17
+        print('Game loop started')
         while True:
             if self.client_one is None or self.client_two is None:
                 break
             if self.winner != 0:
                 break
             
-            self._collisions()
+            await self._collisions()
             self.ball.update(1/thickrate)
-            self._send_info()
+            await self._send_info()
             time.sleep(1/thickrate)
 
             
@@ -190,7 +196,10 @@ class Parser:
 
         def parse_run(self, rooms : Rooms):
             if self.command == 'CRTROOM':
-                rooms.add_room(Room(self.args['name'], self.args['password']))
+                name = self.args['name']
+                password = self.args['password']
+                room = Room(name, password)
+                rooms.add_room(room)
                 return None
             elif self.command == 'RMVROOM':
                 rooms.remove_room(rooms.get_room(self.args['name']))
@@ -224,7 +233,7 @@ class Parser:
                 self.args = data['args']
                 self.websocket = websocket
             except KeyError as e:
-                raise e
+                raise Exception(f'UserParser Key error: {e}')
 
         def parse_run(self, rooms : Rooms):
             if self.command == "JOIN":
