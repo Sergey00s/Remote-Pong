@@ -6,18 +6,20 @@ class Pong:
 		self.width = width
 		self.height = height
 		self.player1 = GameObject(0, 0, 10, 100, name="Player 1")
+		self.player1ready = False
 		self.player2 = GameObject(0, 0, 10, 100, name="Player 2")
+		self.player2ready = False
 		self.ball = GameObject(0, 0, 10, 10, name="Ball")
 		self.borderTop = GameObject(0, 0, width, 1, static=True, name="Border")
 		self.borderBottom = GameObject(0, height - 1, width, 1, static=True, name="Border")
 		self.borderLeft = GameObject(0, 0, 1, height, static=True, name="Border")
 		self.borderRight = GameObject(width - 1, 0, 1, height, static=True, name="Border")
-		self.reset()
 		self.score = {
 			'player1': 0,
 			'player2': 0
 		}
 		self.status = 'waiting'
+		self.reset()
 
 	def get_score(self):
 		return self.score['player1'], self.score['player2']
@@ -46,12 +48,15 @@ class Pong:
 		self.player2.physics['momentumy'] = momentumy
 
 	def update(self, dt = 1):
-		if self.status == 'waiting' or self.status == 'finished':
-			pass
+		if (self.player1ready == True and self.player2ready == True and self.status == 'waiting'):
+			self.status = 'playing'
+		if self.status == 'waiting' or self.status == 'finished' or self.status == 'reset':
+			return False
 		self.check_collision()
 		self.player1.update(dt)
 		self.player2.update(dt)
 		self.ball.update(dt)
+		return True
 	
 	def check_collision(self):
 		if self.ball.get_collision(self.player1):
@@ -81,20 +86,6 @@ class Pong:
 		else:
 			pass
 
-
-	def run(self):
-		tickrate = 16
-		last_time = time.time()
-		while True:
-			current_time = time.time()
-			delta_time = current_time - last_time
-			last_time = current_time
-			self.update(delta_time)
-			time.sleep(1 / tickrate)
-
-
-
-
 	def reset(self):
 		self.player1.x = 0
 		self.player1.y = self.height / 2 - self.player1.height / 2
@@ -112,5 +103,7 @@ class Pong:
 		self.status = 'waiting'
 		self.score['player1'] = 0
 		self.score['player2'] = 0
+		self.player1ready = False
+		self.player2ready = False
 
 		

@@ -35,14 +35,16 @@ class PongGraphics {
 
 class Pong
 {
-	constructor(canvas, width, height, socket, token)
+	constructor(canvas, width, height, socket, token, username, userid, roomid)
 	{
 		this.graphics = new PongGraphics(canvas, width, height);
 		this.socket = socket;
 		this.token = token;
-		this.req = new UserRequest(socket, token);
-		this.room = "test";
-		this.state = -1;
+		this.req = new UserRequest(socket, token, username, userid);
+		this.roomid = roomid;
+		this.username = username;
+		this.userid = userid;
+		this.state = "waiting";
 		this.up = 0;
 		this.down = 0;
 		this.player = new Player("blue", {x: 10, y: height/2}, 1);
@@ -83,54 +85,45 @@ class Pong
 		}
 	}
 
+	on_statuss(data)
+	{
+		if (data.status == "waiting")
+		{
+			this.state = "waiting";
+		}
+		if (data.status == "playing")
+		{
+			this.state = "playing";
+		}
+		if (data.status == "gameover")
+		{
+			this.state = "gameover";
+		}
+		if (data.status == "beready")
+		{
+			this.state = "ready";
+			this.req.send_ready(this.roomid);
+		}
+	}
+
 	onmessagedata(event)
 	{
 		var data = JSON.parse(event.data);
 		console.log(data);
-		if (data.type == "game")
+		if (data.type == "gameupdate")
 		{
-			var dat = data.data;
-			var command = dat.command;
-			var args = dat.args;
-			if (command == "ball")
-			{
-				var x = args.posX;
-				var y = args.posY;
-				console.log(x);
-				console.log(y);
-				this.ball.updatePos({x: x, y: y});
-			}	
-			if (command == "player")
-			{
-				this.remote_player.updatePos({x: args.posX, y: args.posY});
-			}
-			if (command == "winner")
-			{
-				this.state = 1;
-			}
-			if (command == "loser")
-			{
-				this.state = 2;
-			}
-			if (command == "start")
-			{
-				this.state = 0;
-			}
+			data = data.data;
+			if (data.type == "status")
+				this.on_statuss(data.data);
+			if (data.type == "playermove")
+				this.on_playermove(data.data);
+			if (data.type == "ballmove")
+				this.on_ballmove(data.data);
+
 		}
 	}
 
-	change_room(room, password)
-	{
-		this.req.request("JOIN", {name: room, password: password});
-		//this.socket.send(JSON.stringify({type: "user", data: {user_token: this.token, command: "JOIN", args: {name: room, password: password}}}));
-	}
 
-	player_pos_update()
-	{
-		this.req.request("MOVE", {name: this.room, posX: this.player.pos.x, posY: this.player.pos.y});
-		//var data = {type: "user", data: {user_token: this.token, command: "MOVE", args: {name: this.room, posX: this.player.pos.x, posY: this.player.pos.y}}};
-		//this.socket.send(JSON.stringify(data));
-	}
 
 	run()
 	{
@@ -141,7 +134,7 @@ class Pong
 
 	updates()
 	{
-		if (this.state == -1)
+		if (this.state != "readytest")
 		{
 			return;
 		}

@@ -54,19 +54,26 @@ class Reciver:
 	def __init__(self, raw_message):
 		self.raw_message = raw_message
 		try:
+
 			self.data = json.loads(raw_message)
+			print(self.data)
 			self.usertoken = self.data['usertoken']
 			self.username = self.data['username']
 			self.userid = self.data['userid']
 			self.message = self.data['message']
+			self.message_type = self.message['type']
+			self.message_data = self.message['data']
+
 		except Exception as e:
 			print(e)
 			self.data = None
+			self.usertoken = None
+			self.username = None
+			self.userid = None
+			self.message = None
+			self.message_type = None
+			self.message_data = None
 
-		self.message_type = self.message['type']
-		self.message_data = self.message['data']
-
-	
 	class RoomOperation:
 		def __init__(self, data):
 			self.data = data
@@ -124,6 +131,9 @@ class GameUpdate:
 			self.playervely = None
 			self.playermomentumx = None
 			self.playermomentumy = None
+
+		if self.type == 'playerready':
+			self.playerready = self.data['playerready']
 
 	def parse(self):
 		if self.type == 'playermove':

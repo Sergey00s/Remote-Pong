@@ -2,23 +2,82 @@
 
 
 class UserRequest {
-	constructor(socket, token) {
+	constructor(socket, token, username, userid) {
 		this.socket = socket;
-		this.type = "user";
 		this.token = token;
-	}
-
-	request(command, args) {
-		var fixed_data = {type: this.type, data: {user_token: this.token, command: command, args: args}};
-		this.socket.send(JSON.stringify(fixed_data));
+		this.username = username;
+		this.userid = userid;
 	}
 
 	set_token(token) {
 		this.token = token;
 	}
 
-	pure_request(buffer) {
-		this.socket.send(buffer);
+	set_username(username) {
+		this.username = username;
+	}
+
+	set_userid(userid) {
+		this.userid = userid;
+	}
+
+	send_playermove(x, y, roomid, dataset) {
+		var data = {
+			usertoken: this.token,
+			username: this.username,
+			userid: this.userid,
+			message: {
+				type: "gameupdate",
+				data: {
+					roomid: roomid,
+					type: "playermove",
+					data: {
+						playerposx: dataset.playerposx,
+						playerposy: dataset.playerposy,
+						playervelx: dataset.playervelx,
+						playervely: dataset.playervely,
+						playermomentumx: dataset.playermomentumx,
+						playermomentumy: dataset.playermomentumy
+					}
+				}
+			}
+		};
+		this.socket.send(JSON.stringify(data));
+	}
+
+	send_room_command(roomid, command) {
+		var data = {
+			usertoken: this.token,
+			username: this.username,
+			userid: this.userid,
+			message: {
+				type: command,
+				data: {
+					roomid: roomid
+				}
+			}
+		};
+		this.socket.send(JSON.stringify(data));	
+	}
+
+	send_ready(roomid) 
+	{
+		var data = {
+			usertoken: this.token,
+			username: this.username,
+			userid: this.userid,
+			message: {
+				type: "gameupdate",
+				data: {
+					roomid: roomid,
+					type: "playerready",
+					data: {
+						playerready: true
+					}
+				}
+			}
+		};
+		this.socket.send(JSON.stringify(data));
 	}
 }
 

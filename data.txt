@@ -1,175 +1,92 @@
-Gameserver
+"""
+ recive message format:
+    {
+        'usertoken': 'token',
+        'username': 'username',
+        'userid': 'userid',
+        'message': 'message'
+    }
 
-types : 
-	admin :
-		commands:
-			CRTROOM:
-				args:
-					name
-					password
+    message format:
+        {
+            'type': 'type',
+            'data': 'data'
+        }
+        types:
+            joinroom
+            leaveroom
+            createroom
+            deleteroom
+            statusroom
+            gameupdate
 
-			RMVROOM:
-				args:
-					name
-					password
+        data:
+        
+            joinroom, leaveroom, createroom, deleteroom, statusroom:
+                {
+                    'roomid': 'roomid'
+                }
 
-			LIST:
-				
+            gameupdate:
+                {
+                    'roomid': 'roomid',
+                    'type': 'type',
+                    'data': 'data'
+                }
+                types:
+                    playermove
 
-			GET:
-				args:
-					what:
-						RESULTS:
-					
-
-	user :
-		commands:
-			JOIN:
-				args:
-					name
-					password
-			STATUS:
-				args:
-					name
-
-			MOVE:
-				args:
-					posX
-					posY
-					name
-			BALL:
-				args:
-					posX
-					posY
-					name
-			GET:
-				args:
-					what:
-						BALL
-						PLAYER
-						WINNER
-					name
-
-	guest:
-		NONE
+                data:
+                    {
+                        'playerposx': 'playerposx',
+                        'playerposy': 'playerposy',
+                        'playervelx': 'playervelx',
+                        'playervely': 'playervely',
+                        'playermomentumx': 'playermomentumx',
+                        'playermomentumy': 'playermomentumy',
+                    }
+                
+"""
 
 
+"""
+    send message format:
 
-Admin commands:
+    {
+        'type': 'type',
+        'data': 'data'
+    }
 
-	Room Creation:
+    types:
+        gameupdate
 
-		jsonObj = {
-			'type': 'admin',
-			'data': {
-						'password': ADMINPASS,
-						'command':	'CRTROOM',
-						'args': {
-							'name' : ROOMNAME,
-							'password': ROOMPASS
-						}
-					}
-		
-		}
+    data:
 
-	Room Remove:
+        gameupdate:
+            {
+                'type': 'type',
+                'data': 'data'
+            }
+            types:
+                playermove
+                ballmove
 
-		jsonObj = {
-			'type': 'admin',
-			'data': {
-						'password': ADMINPASS,
-						'command':	'RMVROOM',
-						'args': {
-							'name' : ROOMNAME
-						}
-					}
-		
-		}
+            data:
+                playermove:
+                    {
+                        'remoteposx': 'remoteposx',
+                        'remoteposy': 'remoteposy',
+                    }
+                ballmove:
+                    {
+                        'ballposx': 'ballposx',
+                        'ballposy': 'ballposy',
+                    }
 
-	List room names:
-		
-		jsonObj = {
-			'type': 'admin',
-			'data': {
-						'password': ADMINPASS,
-						'command':	'LIST',
-						'args': {}
-					}
-		
-		}
+                status:
+                    winner, loser, waiting, playing, error, notfound
+                    {
+                        'status': 'status'
+                    }
 
-		Respond:
-			jsonObj = {
-				type: data,
-				data: {
-					[DATA_LIST]
-				}
-			}
-
-		
-	
-	Get attr from server:
-
-		jsonObj = {
-			'type': 'admin',
-			'data': {
-						'password': ADMINPASS,
-						'command':	'GET',
-						'args': {
-							'what': ATTR,
-							'room': ROOM
-							ATTR_ARG: ARG
-						}
-					}
-		
-		}
-
-		Respond:
-			jsonObj = {
-				'type': 'data',
-				'data': {
-					[DATA_LIST]
-				}
-			}
-
-
-
-
-User commands:
-
-	join room:
-		
-		jsonObj = {
-			'type': 'user',
-			'data': {
-						'user_token': TOKEN,
-						'command':	'JOIN',
-						'args': {
-							'name' : ROOMNAME,
-							'password': ROOMPASS
-						}
-					}
-		
-		}
-
-	
-	get status:
-
-		jsonObj = {
-			'type': 'user',
-			'data': {
-						'user_token': TOKEN,
-						'command':	'STATUS',
-						'args': {
-							'name' : ROOMNAME
-						}
-					}
-		}
-
-		Respond:
-			jsonObj = {
-				'type': 'data',
-				'data': {
-					[DATA_LIST]
-				}
-			}
+"""
