@@ -12,7 +12,7 @@ var game;
 button.addEventListener("click", function(){
     console.log("button clicked");
     var canvas = document.getElementById("canvas_game");
-    game = new Pong(dummy_token, canvas, socket, idofplayer.value);
+    game = new Pong(canvas, socket, idofplayer.value);
 });
 socket.onopen = function(e) {
     console.log("[open] Connection established");

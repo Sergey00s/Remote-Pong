@@ -136,3 +136,6 @@ class Vector2:
 		self.y /= vec.y
 		return self
 	
+
+
+

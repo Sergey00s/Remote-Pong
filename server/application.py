@@ -1,6 +1,7 @@
 import time
 import json
-from game import Game
+from pythongame import Game
+
 send = None
 recive = None
 new_data = None
@@ -19,16 +20,13 @@ def handle_gamerequest(data, socket):
 		msj_json = json.dumps(msj_json)
 		send(msj_json, socket)
 		return False
-	if game.new_game(gameid, player1id, player2id) is False:
-		msj_json = {"error": "refused"}
+	if game.state != "menu":
+		msj_json = {"error": "game "}
 		msj_json = json.dumps(msj_json)
 		send(msj_json, socket)
-		return False  
-	else:
-		msj_json = {"success": "true"}
-		msj_json = json.dumps(msj_json)
-		send(msj_json, socket)
-		return True
+		return False
+	game.paddle1.id = player1id
+	game.paddle2.id = player2id
 
 def handle_command(data, socket):
 	try:
@@ -42,13 +40,6 @@ def handle_command(data, socket):
 	typeof = data["type"]
 	if typeof == "gamerequest":
 		handle_gamerequest(data, socket)
-	elif typeof == "getresult":
-		result = game.get_result(data["gameid"])
-		send_result = {"result": result}
-		send_result = json.dumps(send_result)
-		send(send_result, socket)
-	elif typeof == "playerpos":
-		game.playermove(socket, data)
 	elif typeof == "join":
 		if (game.join(data["playerid"], socket) == False):
 			print("join refused: {} != {}".format((data["playerid"]), (game.player1.id)))
@@ -71,7 +62,7 @@ def app(sendf , recivef, new_dataf):
 	send = sendf
 	recive = recivef
 	new_data = new_dataf
-	game = Game(400, 400, send, recive)
+	game = Game(1000, 1000)
 	while True:
 		data = recive()
 		try:
@@ -79,7 +70,7 @@ def app(sendf , recivef, new_dataf):
 				handle_command(data[1], data[0])
 		except Exception as e:
 			print(e)
-		game.update()
+		game.update(1)
 		time.sleep(0.1)
 
 
