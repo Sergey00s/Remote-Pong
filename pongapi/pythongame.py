@@ -1,4 +1,3 @@
-import pygame
 import math
 import numpy as np
 import requests
@@ -25,9 +24,9 @@ class Paddle:
 
 	def move(self, direction):
 		if direction == "up" and self.y > 0:
-			self.y -= 10
+			self.y -= 15
 		if direction == "down" and self.y < sizey - self.height:
-			self.y += 10
+			self.y += 15
 
 	def beready(self):
 		self.ready = True
@@ -44,7 +43,7 @@ class Ball:
 		self.y = y
 		self.radius = radius
 		self.direction = [np.random.choice([-1, 1]), np.random.choice([-1, 1])]
-		self.speed = 5
+		self.speed = 0.3
 
 
 	def reset(self):
@@ -53,9 +52,9 @@ class Ball:
 		self.direction = self.direction = [np.random.choice([-1, 1]), np.random.choice([-1, 1])]
 
 	def bounce_x(self):
-		self.direction[0] *= -1 * np.random.uniform(1, 1.4)
+		self.direction[0] *= -1 * np.random.uniform(1, 1.3)
 	def bounce_y(self):
-		self.direction[1] *= -1 * np.random.uniform(1, 1.4)
+		self.direction[1] *= -1 * np.random.uniform(1, 1.3)
 
 
 	def update(self, delta=1):

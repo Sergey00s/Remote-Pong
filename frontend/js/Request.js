@@ -3,7 +3,12 @@ class Request
 	constructor(endpoint)
 	{
 		this.endpoint = endpoint;
-		this.headers = {
+		this.get_headers = {
+			'Accept': 'application/json',
+			'Content-Type': 'application/json'
+		}
+
+		this.post_headers = {
 			'Content-Type': 'application/json',
 			'Accept': 'application/json'
 		};
@@ -12,18 +17,20 @@ class Request
 	get(url, data = null)
 	{
 		url = this.endpoint + url;
+		var headers = this.get_headers;
 		return fetch(url, {
 			method: 'GET',
-			headers: this.headers,			
+			headers: headers,			
 		});
 	}
 
 	post(url, data = null)
 	{
 		url = this.endpoint + url;
+		var headers = this.post_headers;
 		return fetch(url, {
 			method: 'POST',
-			headers: this.headers,
+			headers: headers,
 			body: JSON.stringify(data)
 		});
 	}

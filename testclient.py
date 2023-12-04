@@ -67,7 +67,7 @@ def ping():
 	print(resp.json())
 
 
-
+create_game("game", "pass", True, "pass1", "pass2")
 # create_game("game1", "pass", True, "pass1", "pass2")
 # time.sleep(3)
 # join_game("game1", "pass", 1, "pass1")
