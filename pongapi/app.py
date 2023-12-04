@@ -1,152 +1,122 @@
 #flask api
 
 from flask import Flask, jsonify, request, Response
+from flask_cors import CORS
 import hashlib as hasher
-from pythongame import Game
+#from pythongame import Game
+from Room import Room
+
+
+endpointroot = '/api'
 
 
 
-keys = []
 app = Flask(__name__)
-keys.append("test")
+CORS(app)
 games = []
 
 
-@app.route('/ping', methods=['GET'])
+@app.route(endpointroot + "/ping" , methods=['GET'])
 def ping():
 	return jsonify({'response': 'pong!'})
 
-@app.route('/ping', methods=['POST'])
+@app.route(endpointroot+"/ping" , methods=['POST'])
 def post_ping():
 	data = request.get_json()
 	return jsonify(data), 201
 
-@app.route('/api/get_key', methods=['POST'])
-def give_key():
-	data = request.get_json()
-	key = hasher.sha256(str(data).encode('utf-8')).hexdigest()
-	keys.append(key)
-	return jsonify({'api': key}), 201
 
-#done
-@app.route('/api/new_game', methods=['POST'])
+@app.route(endpointroot+"/new_game", methods=['POST'])
 def new_game():
 	data = request.get_json()
-	if data['api'] not in keys:
-		return jsonify({'response': 'invalid api key'}), 401
-	if len(games) > 5:
-		return jsonify({'response': 'server is full'}), 401
 	password = data['password']
-	game_id = data['game_id']
+	gameid = data['gameid']
+	private = data['private']
+	password_p1 = None
+	password_p2 = None
+	if private == True:
+		password_p1 = data['password_p1']
+		password_p2 = data['password_p2']
 	for game in games:
-		if game.game_id == game_id:
-			return jsonify({'response': 'game id already exists'}), 401
-	game = Game(password, game_id)
-	games.append(game)
-	resp = {'response': 'game created', 'game_id': game_id}
-	return jsonify(resp), 201
+		if game.isdestroyed:
+			games.remove(game)
+	for game in games:
+		if game.game_id == gameid:
+			return jsonify({'response': 'game already exists'}), 409
+	if games.count(gameid) > 0:
+		return jsonify({'response': 'game already exists'}), 409
+	if games.__len__() > 2:
+		return jsonify({'response': 'server full'}), 503
+	games.append(Room(gameid, password, private, password_p1, password_p2))
+	return jsonify({'response': 'game created'}), 201
 
-#done
-@app.route('/api/join_game', methods=['POST'])
+
+def get_game(gameid):
+	for game in games:
+		if game.game_id == gameid:
+			return game
+	return None
+
+
+@app.route(endpointroot+"/join_game", methods=['POST'])
 def join_game():
+	print("join_game")
 	data = request.get_json()
-	if data['api'] not in keys:
-		return jsonify({'response': 'invalid api key'}), 401
-	game_id = data['game_id']
+	gameid = data['gameid']
 	password = data['password']
-	for game in games:
-		if game.game_id == game_id:
-			if game.password == password:
-				game.join(data['api'])
-				return jsonify({'response': 'game joined', 'game_id': game_id}), 201
-			else:
-				return jsonify({'response': 'invalid password'}), 401
-		
-	return jsonify({'response': 'game not found'}), 401
+	player = data['player']
+	player_pass = None
+	try:
+		player_pass = data['player_pass']
+	except KeyError:
+		pass
+
+	game = get_game(gameid)
+	if game is None:
+		return jsonify({'response': 'game does not exist'}), 404
+	
+	if game.be_ready(password, player, player_pass):
+		return jsonify({'response': 'game joined'}), 200
+	return jsonify({'response': 'wrong password'}), 401
 
 
-#done
-@app.route('/api/game_state', methods=['POST'])
-def game_state():
-	data = request.get_json()
-	if data['api'] not in keys:
-		return jsonify({'response': 'invalid api key'}), 401
-	game_id = data['game_id']
-	for game in games:
-		if game.game_id == game_id:
-			if game.password == data['password']:
-				ballx, bally = game.ball_pos()
-				if game.paddle1.id == data['api']:
-					p1x, p1y = game.p1_pos()
-					p2x, p2y = game.p2_pos()
-				else:
-					p1x, p1y = game.p2_pos()
-					p2x, p2y = game.p1_pos()
-
-				state = game.state()
-				resp = {'response': 'game state', 'game_id': game_id, 'ballx': ballx, 'bally': bally, 'p1x': p1x, 'p1y': p1y, 'p2x': p2x, 'p2y': p2y, 'state': state}
-				return jsonify(resp), 201
-			
-
-			else:
-				return jsonify({'response': 'invalid password'}), 401
-	return jsonify({'response': 'game not found'}), 401
-
-
-#done
-@app.route('/api/move', methods=['POST'])
+@app.route(endpointroot+"/move", methods=['POST'])
 def move():
 	data = request.get_json()
-	if data['api'] not in keys:
-		return jsonify({'response': 'invalid api key'}), 401
-	game_id = data['game_id']
-	for game in games:
-		if game.game_id == game_id:
-			if game.password == data['password']:
-				game.move(data['api'], data['direction'])
-				return jsonify({'response': 'moved'}), 201
-			else:
-				return jsonify({'response': 'invalid password'}), 401
-	return jsonify({'response': 'game not found'}), 401
+	gameid = data['gameid']
+	player = data['player']
+	password = data['password']
+	direction = data['direction']
+	player_pass = None
+	try:
+		player_pass = data['player_pass']
+	except KeyError:
+		pass
+	game = get_game(gameid)
 
-
-#done
-@app.route('/api/leave_game', methods=['POST'])
-def leave_game():
-	data = request.get_json()
-	if data['api'] not in keys:
-		return jsonify({'response': 'invalid api key'}), 401
-	game_id = data['game_id']
-	for game in games:
-		if game.game_id == game_id:
-			if game.password == data['password']:
-				game.leave(data['api'])
-				return jsonify({'response': 'left'}), 201
-			else:
-				return jsonify({'response': 'invalid password'}), 401
-	return jsonify({'response': 'game not found'}), 401
-
-#done
-@app.route('/api/game/<game_id>', methods=['POST'])
-def game(game_id):
-	data = request.get_json()
-	if data['api'] not in keys:
-		return jsonify({'response': 'invalid api key'}), 401
-	for game in games:
-		if game.game_id == game_id:
-			if game.password == data['password']:
-				if game.winner() == None:
-					return jsonify({'response': 'game not over'}), 201
-				if game.winner() == data['api']:
-					return jsonify({'response': 'you won'}), 201
-				if game.winner() != data['api']:
-					return jsonify({'response': 'you lost'}), 201
-			else:
-				return jsonify({'response': 'invalid password'}), 401
-	return jsonify({'response': 'game not found'}), 401
+	if game is None:
+		return jsonify({'response': 'game does not exist'}), 404
+	if game.password != password:
+		return jsonify({'response': 'wrong password'}), 401
+	if game.move_paddle(player, direction, player_pass):
+		return jsonify({'response': 'paddle moved'}), 200
+	return jsonify({'response': 'wrong password'}), 401
 
 
 
+
+@app.route( endpointroot + '/info/<string:gameid>', methods=['GET'])
+def get_state(gameid):
+	game = get_game(gameid)
+	if game is None:
+		return jsonify({'response': 'game does not exist'}), 404
+	ball_pos = game.get_ball_pos()
+	p1_pos = game.get_paddle_pos(1)
+	p2_pos = game.get_paddle_pos(2)
+	state = game.get_state()
+	score1 = game.game.score1
+	score2 = game.game.score2
+	return jsonify({'ball_pos': ball_pos, 'p1_pos': p1_pos, 'p2_pos': p2_pos, 'state': state, 'score1': score1, 'score2': score2}), 200
 
 
 if __name__ == '__main__':

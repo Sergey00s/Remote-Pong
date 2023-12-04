@@ -1,85 +1,56 @@
 import {Player, Ball} from "./Player.js";
+import Request from "./Request.js";
 
 
-class Pong
-{
-	constructor(canvas, socket, id)
+
+class Game{
+	constructor(canvas, url)
 	{
 		this.canvas = canvas;
-		this.socket = socket;
-		this.id = id;
-		this.score1 = 0;
-		this.score2 = 0;
-		this.ready = false;
 		this.ctx = canvas.getContext("2d");
-		this.ctx.fillStyle = "black";
-		this.ctx.fillRect(0, 0, canvas.width, canvas.height);
-		this.ball = new Ball(canvas.width/2, canvas.height/2);
-		this.player = new Player(10, canvas.height/2, 10, 50);
-		this.remoteplayer = new Player(canvas.width - 10, canvas.height/2, 10, 50);
-		this.socket.onmessage = this.onmessage.bind(this);
-		//window.addEventListener("keydown", this.keydown.bind(this));
-
+		this.url = url;
 	}
 
-	keydown(event)
+
+	join_game(gameid, gamepass, player, playerpass)
 	{
-		if(event.keyCode == 38)
-		{
-			this.socket.send(JSON.stringify({"type": "move", "direction": "up", "token": this.id}));
-		}
-		if(event.keyCode == 40)
-		{
-			this.socket.send(JSON.stringify({"type": "move", "direction": "down", "token": this.id}));
-		}
+		var req = new Request(this.url);
+		var url = "/join_game";
+		var data = {gameid: gameid, password: gamepass, player: player, player_pass: playerpass};
+		req.post(url, data).then(function(response){
+			return response.json();
+		}).then(function(data){
+			console.log(data);
+		}).catch(function(error){
+			console.log(error);
+		});
 	}
 
-
-	to_screen_coords(x, y)
+	game_info(gameid)
 	{
-		var canvas_width = this.canvas.width;
-		var canvas_height = this.canvas.height;
-		var world_width = 1000;
-		var world_height = 1000;
-
-
-		var x_screen = (x / world_width) * canvas_width;
-		var y_screen = (y / world_height) * canvas_height;
-
-		return [x_screen, y_screen];
-
+		var req = new Request(this.url);
+		var url = "/info/" + gameid;
+		var data = null;
+		data = req.get(url).then(function(response){
+			return response.json();
+		}).then(function(data){
+			return data;
+		});
+		return data;
 	}
 
-
-
-	onmessage(event)
+	move(gameid, gamepass, player, playerpass, direction)
 	{
-		var data = JSON.parse(event.data);
-		console.log(data);
-		if(data.type == "new_position")
-		{
-			var coords = this.to_screen_coords(data.x, data.y);
-			this.remoteplayer.new_position(coords[0], coords[1]);
-		}
-		if (data.type == "new_ball_position")
-		{
-			var coords = this.to_screen_coords(data.x, data.y);
-			this.ball.new_position(coords[0], coords[1]);
-		}
-		if (data.type == "score1")
-		{
-			this.score1 = this.score1 + 1;
-		}
-		if (data.type == "score2")
-		{
-			this.score2 = this.score2 + 1;
-		}
-		
+		var req = new Request(this.url);
+		var url = "/move";
+		var data = {gameid: gameid, password: gamepass, player: player, player_pass: playerpass, direction: direction};
+		return req.post(url, data).then(function(response){
+			return response.json();
+		}).then(function(data){
+			return data;
+		}).catch(function(error){
+			console.log(error);
+		});
 	}
 
-
-	
 };
-
-
-export default Pong;

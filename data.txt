@@ -1,9 +1,0 @@
-data = {
-    type: gameupdate
-    
-    playermomentumx: playermomentumx
-    playermomentumy: playermomentumy
-    playerposx....
-}
-
-types : gamerequest, joingame, 

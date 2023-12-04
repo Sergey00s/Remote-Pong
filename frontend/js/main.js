@@ -1,36 +1,43 @@
 //import { Player, RemotePlayer } from "./Player";
-import Pong from "./Game.js";
+
+import Request from "./Request.js";
 
 
-var dummy_token = "1234567890";
+var backendurl = "http://localhost:5000";
+var endpoint = "/api"
 
-const socket = new WebSocket('ws://localhost:8765');
-var idofplayer = document.getElementById("id");
-var button = document.getElementById("joingame");
-var game;
 
-button.addEventListener("click", function(){
-    console.log("button clicked");
-    var canvas = document.getElementById("canvas_game");
-    game = new Pong(canvas, socket, idofplayer.value);
+var req = new Request(backendurl + endpoint);
+var player = document.getElementById("player");
+var gameid = document.getElementById("gameid");
+var gamepass = document.getElementById("gamepass");
+var playerpass = document.getElementById("playerpass");
+var joinbutton = document.getElementById("joinbutton");
+var gameinfo_button = document.getElementById("gameinfo_button");
+
+
+
+joinbutton.addEventListener("click", function(){
+
+    var url = "/join_game";
+    var data = {gameid: gameid.value, password: gamepass.value, player: player.value, player_pass: playerpass.value};
+    req.post(url, data).then(function(response){
+        return response.json();
+    }).then(function(data){
+        console.log(data);
+    }).catch(function(error){
+        console.log(error);
+    });
 });
-socket.onopen = function(e) {
-    console.log("[open] Connection established");
-};
 
 
-socket.onclose = function(event) {
+gameinfo_button.addEventListener("click", function(){
+    
+        var url = "/info/" + gameid.value
+        req.get(url).then(function(response){
+            console.log(response.response);
+        });
+});
 
-    if (event.wasClean) {
-        console.log(`[close] Connection closed cleanly, code=${event.code} reason=${event.reason}`);
-    } else {
-
-        console.log('[close] Connection died');
-    }
-};
-
-socket.onerror = function(error) {
-    console.log(`[error] ${error.message}`);
-}
 
 
