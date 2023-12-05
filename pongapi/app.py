@@ -2,8 +2,6 @@
 
 from flask import Flask, jsonify, request, Response
 from flask_cors import CORS
-import hashlib as hasher
-#from pythongame import Game
 from Room import Room
 
 

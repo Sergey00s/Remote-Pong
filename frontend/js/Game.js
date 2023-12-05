@@ -68,7 +68,7 @@ class Game{
 	{
 		if (this._checked && this.parameters.gameid != null && this.parameters.gamepass != null && this.parameters.player != null && this.parameters.playerpass != null)
 		{
-			this.interval = setInterval(this.info_update.bind(this), 15);
+			this.interval = setInterval(this.info_update.bind(this), 10);
 			this._checked = false;
 		}
 		if (this.state == "gameover")

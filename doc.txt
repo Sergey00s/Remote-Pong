@@ -1,0 +1,39 @@
+
+ping
+	endpoint = /api/ping
+	getrequest(endpoint)
+	respond = {"response": "pong!"}
+
+
+
+cretaing game
+	endpoint = /api/new_game
+	data = {
+		"gameid": gameid,
+		"password": password,
+		"private": private,
+		"password_p1": password_p1,
+		"password_p2": password_p2
+	}
+	postrequest(endpoint, body = data)
+
+
+get info
+	endpoint = /api/info/gameid
+	getrequest(endpoint)
+	respond ={'ball_pos': ball_pos, 'p1_pos': p1_pos, 'p2_pos': p2_pos, 'state': state, 'score1': score1, 'score2': score2}
+
+
+
+
+join_game
+	endpoint = /api/join_game
+	data = {
+		"gameid": gameid,
+		"player", player
+		"password": password,
+		"player_pass": player_pass
+	}
+	postrequest(endpoint, body = data)
+
+
